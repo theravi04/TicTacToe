@@ -1,36 +1,63 @@
 import { StatusBar } from "expo-status-bar";
-import React, {useState} from "react";
-import { StyleSheet, Text, View, ImageBackground } from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, ImageBackground, Pressable, Alert } from "react-native";
 import bg from "./assets/bg.jpeg";
 
 export default function App() {
-
   const [map, setMap] = useState([
-
-    ['o','',''],  //1st Row
-    ['','x','x'],  //2st Row
-    ['o','',''],  //3st Row
-
+    ["", "", ""],    //1st Row
+    ["", "", ""],    //2st Row
+    ["", "", ""],     //3st Row
   ]);
 
+  const [currentTurn , setCurrentTurn] = useState("o");
+
+  const onPress = (rowIndex, columnIndex) => {
+    if(map[rowIndex][columnIndex] != ""){
+      Alert.alert("Position already occupied");
+      return;
+    }
+
+    setMap((existingMap) => {
+      const updatedMap = [...existingMap];
+      updatedMap[rowIndex][columnIndex] = currentTurn;
+      return updatedMap;
+    });
+
+    setCurrentTurn(currentTurn == "x" ? "o" : "x");
+
+  }
 
   return (
     <View style={styles.container}>
       <ImageBackground source={bg} style={styles.bg} resizeMode="contain">
         <View style={styles.map}>
 
-          {map.map(row => {
-            row.map(cell =>(
-              <View style={styles.cell}></View>
-            ))
-          })}
+          {map.map((row,rowIndex) => (
+            <View style={styles.row}>
+
+              {row.map((cell, columnIndex) => (
+                <Pressable 
+                  onPress={() => onPress(rowIndex, columnIndex)} 
+                  style={styles.cell}>
+
+                  {cell == "o" && <View style={styles.circle} />}
+                  {cell == "x" && (
+                    <View style={styles.cross}>
+                      <View style={styles.crossLine} />
+                      <View style={[styles.crossLine, styles.crossLineR]} />
+                    </View>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          ))}
 
           {/* <View style={styles.circle} />
           <View style={styles.cross}>
             <View style={styles.crossLine} />
             <View style={[styles.crossLine, styles.crossLineR]} />
           </View> */}
-
         </View>
       </ImageBackground>
 
@@ -53,23 +80,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingTop: 15,
   },
-  map:{
-    borderWidth:1,
-    borderColor:'white',
-    width:'80%',
-    aspectRatio:1,
+  map: {
+
+    width: "80%",
+    aspectRatio: 1,
   },
-  cell:{
-    
+  row: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  cell: {
+    width: 100,
+    height: 100,
+    flex: 1,
   },
   circle: {
-    position:'absolute',
-
-    left: 1 * 110,
-    top:2 * 110,
-
-    width: 75,
-    height: 75,
+    flex:1,
     borderColor: "white",
     borderRadius: 50,
     borderWidth: 10,
@@ -77,22 +103,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     margin: 10,
   },
-  cross:{
-
-    // left: 0 * 119,
-    // top: 0 * 117,
-
-    width: 75,
-    height: 75,
-    position:'absolute',
+  cross: {
+    flex:1,
   },
   crossLine: {
     position: "absolute",
-    left:32.5,
+    left: "48%",
     width: 10,
-    height: 70,
+    height: "100%",
     backgroundColor: "white",
-    borderRadius:5,
+    borderRadius: 5,
     transform: [
       {
         rotate: "45deg",
