@@ -1,19 +1,26 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
-import { StyleSheet, Text, View, ImageBackground, Pressable, Alert } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ImageBackground,
+  Pressable,
+  Alert,
+} from "react-native";
 import bg from "./assets/bg.jpeg";
 
 export default function App() {
   const [map, setMap] = useState([
-    ["", "", ""],    //1st Row
-    ["", "", ""],    //2st Row
-    ["", "", ""],     //3st Row
+    ["", "", ""], //1st Row
+    ["", "", ""], //2st Row
+    ["", "", ""], //3st Row
   ]);
 
-  const [currentTurn , setCurrentTurn] = useState("o");
+  const [currentTurn, setCurrentTurn] = useState("o");
 
   const onPress = (rowIndex, columnIndex) => {
-    if(map[rowIndex][columnIndex] != ""){
+    if (map[rowIndex][columnIndex] != "") {
       Alert.alert("Position already occupied");
       return;
     }
@@ -26,21 +33,67 @@ export default function App() {
 
     setCurrentTurn(currentTurn == "x" ? "o" : "x");
 
-  }
+    checkWinningState();
+  };
+
+  const checkWinningState = () => {
+
+    //check rows
+    for (let i = 0; i < 3; i++) {
+      const isRowXWinning = map[i].every((cell) => cell == "x");
+      const isRowOWinning = map[i].every((cell) => cell == "o");
+      if (isRowXWinning) {
+        Alert.alert("X won, Row : ",i);
+        // break;
+      }
+      if (isRowOWinning) {
+        Alert.alert("O won, Row : ",i);
+        // break;
+      }
+    }
+
+    //check columns
+    for(let col=0; col<3; col++){
+
+      let isColumnXWinning = true;
+      let isColumnOWinning = true;
+
+      for(let row=0; row<3; row++){
+        if(map[row][col] != 'x'){
+          isColumnXWinning = false;
+        }
+        if(map[row][col] != 'o'){
+          isColumnOWinning = false;
+        }
+      }
+
+      if (isColumnXWinning) {
+        Alert.alert("X won, Col : ", col);
+        // break;
+      }
+      else {
+        Alert.alert("O won, Col : ", col);
+        // break;
+      }
+    }
+
+    //check diagonals
+
+
+  };
 
   return (
     <View style={styles.container}>
       <ImageBackground source={bg} style={styles.bg} resizeMode="contain">
         <View style={styles.map}>
-
-          {map.map((row,rowIndex) => (
-            <View style={styles.row}>
-
+          {map.map((row, rowIndex) => (
+            <View key={'row-${rowIndex}'} style={styles.row}>
               {row.map((cell, columnIndex) => (
-                <Pressable 
-                  onPress={() => onPress(rowIndex, columnIndex)} 
-                  style={styles.cell}>
-
+                <Pressable
+                  key={'row-${rowIndex}-col-${columnIndex}'}
+                  onPress={() => onPress(rowIndex, columnIndex)}
+                  style={styles.cell}
+                >
                   {cell == "o" && <View style={styles.circle} />}
                   {cell == "x" && (
                     <View style={styles.cross}>
@@ -81,7 +134,6 @@ const styles = StyleSheet.create({
     paddingTop: 15,
   },
   map: {
-
     width: "80%",
     aspectRatio: 1,
   },
@@ -95,7 +147,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   circle: {
-    flex:1,
+    flex: 1,
     borderColor: "white",
     borderRadius: 50,
     borderWidth: 10,
@@ -104,7 +156,7 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   cross: {
-    flex:1,
+    flex: 1,
   },
   crossLine: {
     position: "absolute",
