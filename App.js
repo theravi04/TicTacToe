@@ -19,6 +19,14 @@ export default function App() {
 
   const [currentTurn, setCurrentTurn] = useState("o");
 
+  const reset = () => {
+    setMap([
+      ["", "", ""],    //1st Row
+      ["", "", ""],    //2st Row
+      ["", "", ""],     //3st Row
+    ])
+  }
+
   const onPress = (rowIndex, columnIndex) => {
     if (map[rowIndex][columnIndex] != "") {
       Alert.alert("Position already occupied");
@@ -82,6 +90,8 @@ export default function App() {
 
   };
 
+
+
   return (
     <View style={styles.container}>
       <ImageBackground source={bg} style={styles.bg} resizeMode="contain">
@@ -112,6 +122,7 @@ export default function App() {
             <View style={[styles.crossLine, styles.crossLineR]} />
           </View> */}
         </View>
+        <Pressable onPress={reset} style={styles.resetBtn}><Text style={styles.resetText}>Reset</Text></Pressable>
       </ImageBackground>
 
       <StatusBar style="auto" />
@@ -178,4 +189,19 @@ const styles = StyleSheet.create({
       },
     ],
   },
+  resetBtn: {
+    marginBottom: -60,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    height: 40,
+    backgroundColor: "coral",
+    borderRadius: 4,
+  },
+
+  resetText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold"
+  }
 });
