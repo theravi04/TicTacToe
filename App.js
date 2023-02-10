@@ -9,15 +9,16 @@ import {
   Alert,
 } from "react-native";
 import bg from "./assets/bg.jpeg";
+import Cell from "./src/cells";
 
 const emptyMap = [
-    ["", "", ""], //1st Row
-    ["", "", ""], //2st Row
-    ["", "", ""], //3st Row
-]
+  ["", "", ""], //1st Row
+  ["", "", ""], //2st Row
+  ["", "", ""], //3st Row
+];
 
 export default function App() {
-  const [map, setMap] = useState();
+  const [map, setMap] = useState(emptyMap);
 
   const [currentTurn, setCurrentTurn] = useState("o");
 
@@ -35,47 +36,47 @@ export default function App() {
 
     setCurrentTurn(currentTurn == "x" ? "o" : "x");
 
-    checkWinningState();
+    const winner = getWinner();
+    if (winner) {
+      gameWon(winner);
+    } else {
+      checkTieState();
+    }
   };
 
-  const checkWinningState = () => {
-
+  const getWinner = () => {
     //check rows
     for (let i = 0; i < 3; i++) {
       const isRowXWinning = map[i].every((cell) => cell == "x");
       const isRowOWinning = map[i].every((cell) => cell == "o");
       if (isRowXWinning) {
-        Alert.alert('X won, Row '); //check for row number
+        return "x";
         // break;
       }
       if (isRowOWinning) {
-        Alert.alert('O won, Row '); //check for row number
+        return "x";
         // break;
       }
     }
 
     //check columns
-    for(let col=0; col<3; col++){
-
+    for (let col = 0; col < 3; col++) {
       let isColumnXWinning = true;
       let isColumnOWinning = true;
 
-      for(let row=0; row<3; row++){
-        if(map[row][col] != 'x'){
+      for (let row = 0; row < 3; row++) {
+        if (map[row][col] != "x") {
           isColumnXWinning = false;
         }
-        if(map[row][col] != 'o'){
+        if (map[row][col] != "o") {
           isColumnOWinning = false;
         }
       }
 
       if (isColumnXWinning) {
-        Alert.alert('X won. Col '); //check for column number
-        break;
-      }
-      else if(isColumnOWinning) {
-        Alert.alert('O won. Col '); //check for column number
-        break;
+        return "x";
+      } else if (isColumnOWinning) {
+        return "o";
       }
     }
 
@@ -86,73 +87,86 @@ export default function App() {
     let isDiagonalO2Winning = true;
     let isDiagonalX2Winning = true;
 
-    for(let i=0;i<3;i++){
-      if(map[i][i] != 'o'){
+    for (let i = 0; i < 3; i++) {
+      if (map[i][i] != "o") {
         isDiagonalO1Winning = false;
       }
-      if(map[i][i] != 'x'){
+      if (map[i][i] != "x") {
         isDiagonalX1Winning = false;
       }
 
-      if(map[i][2-i] != 'o'){
+      if (map[i][2 - i] != "o") {
         isDiagonalO2Winning = false;
       }
-      if(map[i][2-i] != 'x'){
+      if (map[i][2 - i] != "x") {
         isDiagonalX2Winning = false;
       }
     }
 
-    if(isDiagonalO1Winning)
-      Alert.alert('O won. Diagonal 1');
-    
-    if(isDiagonalX1Winning)
-      Alert.alert('X won. Diagonal 1');
+    if (isDiagonalO1Winning || isDiagonalO2Winning) return "o";
 
-    if(isDiagonalO2Winning)
-      Alert.alert('O won. Diagonal 2');
-    
-    if(isDiagonalX2Winning)
-      Alert.alert('X won. Diagonal 2');
+    if (isDiagonalX1Winning || isDiagonalX2Winning) return "x";
   };
 
-  const gameWon = (player) =>{
-    Alert.alert(``);
-  }
+  //Check Tie State
+  const checkTieState = () => {
+    if (!map.some((row) => row.some((cell) => cell == ""))) {
+      Alert.alert(`Its a Tie`, `Tie`, [
+        {
+          text: "Restart",
+          onPress: resetGame,
+        },
+      ]);
+    }
+  };
 
-  const resetGame = () =>{
-    setMap(emptyMap);
+  //checking Game Won and Reset Game
+  const gameWon = (player) => {
+    Alert.alert(`Game Over!`, `Player ${player} won`, [
+      {
+        text: "Restart",
+        onPress: resetGame,
+      },
+    ]);
+  };
+
+  const resetGame = () => {
+    // console.warn("Reset Game");
+    setMap([
+      ["", "", ""], //1st Row
+      ["", "", ""], //2st Row
+      ["", "", ""], //3st Row
+    ]);
     setCurrentTurn("x");
-  }
+  };
 
   return (
     <View style={styles.container}>
       <ImageBackground source={bg} style={styles.bg} resizeMode="contain">
+        <Text
+          style={{
+            fontSize: 24,
+            color: "white",
+            marginTop: 50,
+            marginBottom: "auto",
+            position: "absolute",
+            top: 50,
+          }}
+        >
+          Current Turn : {currentTurn.toUpperCase()}
+        </Text>
         <View style={styles.map}>
           {map.map((row, rowIndex) => (
-            <View key={'row-${rowIndex}'} style={styles.row}>
+            <View key={`row-${rowIndex}`} style={styles.row}>
               {row.map((cell, columnIndex) => (
-                <Pressable
-                  key={'row-${rowIndex}-col-${columnIndex}'}
-                  onPress={() => onPress(rowIndex, columnIndex)}
-                  style={styles.cell}
-                >
-                  {cell == "o" && <View style={styles.circle} />}
-                  {cell == "x" && (
-                    <View style={styles.cross}>
-                      <View style={styles.crossLine} />
-                      <View style={[styles.crossLine, styles.crossLineR]} />
-                    </View>
-                  )}
-                </Pressable>
+                <Cell
+                  key={`row-${rowIndex}-col-${columnIndex}`}
+                  cell={cell}
+                  onPress={() => onPress(rowIndex,columnIndex)}
+                />
               ))}
             </View>
           ))}
-
-          {/* <View style={styles.circle} />
-          <View style={styles.cross}>
-            <View style={styles.crossLine} />
-            <View style={[styles.crossLine, styles.crossLineR]} />
-          </View> */}
         </View>
       </ImageBackground>
 
@@ -182,42 +196,5 @@ const styles = StyleSheet.create({
   row: {
     flex: 1,
     flexDirection: "row",
-  },
-  cell: {
-    width: 100,
-    height: 100,
-    flex: 1,
-  },
-  circle: {
-    flex: 1,
-    borderColor: "white",
-    borderRadius: 50,
-    borderWidth: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 10,
-  },
-  cross: {
-    flex: 1,
-  },
-  crossLine: {
-    position: "absolute",
-    left: "48%",
-    width: 10,
-    height: "100%",
-    backgroundColor: "white",
-    borderRadius: 5,
-    transform: [
-      {
-        rotate: "45deg",
-      },
-    ],
-  },
-  crossLineR: {
-    transform: [
-      {
-        rotate: "-45deg",
-      },
-    ],
   },
 });
