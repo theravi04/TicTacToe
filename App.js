@@ -17,17 +17,35 @@ const emptyMap = [
   ["", "", ""], //3st Row
 ];
 
+const copyArray = (original) => {
+  const copy = original.map((arr) => {
+    return arr.slice();
+  });
+
+  return copy;
+};
+
 export default function App() {
   const [map, setMap] = useState(emptyMap);
 
   const [currentTurn, setCurrentTurn] = useState("x");
 
-  useEffect(() =>{
-    if(currentTurn == 'o'){
+  const [gameMode, setGameMode] = useState("BOT_MEDIUM"); //local easy medium
+
+  useEffect(() => {
+    if (currentTurn == "o" && gameMode != "LOCAL") {
       botTurn();
     }
-    
-  }, [currentTurn])
+  }, [currentTurn, gameMode]);
+
+  useEffect(() => {
+    const winner = getWinner(map);
+    if (winner) {
+      gameWon(winner);
+    } else {
+      checkTieState();
+    }
+  }, [map]);
 
   const onPress = (rowIndex, columnIndex) => {
     if (map[rowIndex][columnIndex] != "") {
@@ -42,20 +60,13 @@ export default function App() {
     });
 
     setCurrentTurn(currentTurn == "x" ? "o" : "x");
-
-    const winner = getWinner();
-    if (winner) {
-      gameWon(winner);
-    } else {
-      checkTieState();
-    }
   };
 
-  const getWinner = () => {
+  const getWinner = (winnerMap) => {
     //check rows
     for (let i = 0; i < 3; i++) {
-      const isRowXWinning = map[i].every((cell) => cell == "x");
-      const isRowOWinning = map[i].every((cell) => cell == "o");
+      const isRowXWinning = winnerMap[i].every((cell) => cell == "x");
+      const isRowOWinning = winnerMap[i].every((cell) => cell == "o");
       if (isRowXWinning) {
         return "x";
         // break;
@@ -72,10 +83,10 @@ export default function App() {
       let isColumnOWinning = true;
 
       for (let row = 0; row < 3; row++) {
-        if (map[row][col] != "x") {
+        if (winnerMap[row][col] != "x") {
           isColumnXWinning = false;
         }
-        if (map[row][col] != "o") {
+        if (winnerMap[row][col] != "o") {
           isColumnOWinning = false;
         }
       }
@@ -95,17 +106,17 @@ export default function App() {
     let isDiagonalX2Winning = true;
 
     for (let i = 0; i < 3; i++) {
-      if (map[i][i] != "o") {
+      if (winnerMap[i][i] != "o") {
         isDiagonalO1Winning = false;
       }
-      if (map[i][i] != "x") {
+      if (winnerMap[i][i] != "x") {
         isDiagonalX1Winning = false;
       }
 
-      if (map[i][2 - i] != "o") {
+      if (winnerMap[i][2 - i] != "o") {
         isDiagonalO2Winning = false;
       }
-      if (map[i][2 - i] != "x") {
+      if (winnerMap[i][2 - i] != "x") {
         isDiagonalX2Winning = false;
       }
     }
@@ -147,27 +158,57 @@ export default function App() {
     setCurrentTurn("x");
   };
 
-
-  const botTurn = () =>{
+  const botTurn = () => {
     //collect all possible options
     const possiblePositions = [];
-    map.forEach((row,rowIndex) =>{
+    map.forEach((row, rowIndex) => {
       row.forEach((cell, columnIndex) => {
-        if(cell == ''){
-          possiblePositions.push({row: rowIndex, col: columnIndex});
+        if (cell == "") {
+          possiblePositions.push({ row: rowIndex, col: columnIndex });
         }
       });
     });
 
-    //choose the best option
-    const chosenOption = 
-      possiblePositions[Math.floor(Math.random() * possiblePositions.length)];
+    let chosenOption;
 
+    if (gameMode == "BOT_MEDIUM") {
+      //attack
+      possiblePositions.forEach((possiblePositions) => {
+        const mapCopy = copyArray(map);
+        mapCopy[possiblePositions.row][possiblePositions.column] = "o";
 
-    if(chosenOption){
-      onPress(chosenOption.row,chosenOption.col);
+        const winner = getWinner(mapCopy);
+        if (winner == "o") {
+          //attack that position
+          chosenOption = possiblePositions;
+        }
+      });
+
+      if (!chosenOption) {
+        //defend
+        possiblePositions.forEach((possiblePositions) => {
+          const mapCopy = copyArray(map);
+
+          mapCopy[possiblePositions.row][possiblePositions.column] = "x";
+
+          const winner = getWinner(mapCopy);
+          if (winner == "x") {
+            //defend that position
+            chosenOption = possiblePositions;
+          }
+        });
+      }
     }
-    
+
+    //choose the best option
+    if (!chosenOption) {
+      chosenOption =
+        possiblePositions[Math.floor(Math.random() * possiblePositions.length)];
+    }
+
+    if (chosenOption) {
+      onPress(chosenOption.row, chosenOption.col);
+    }
   };
 
   return (
@@ -192,11 +233,46 @@ export default function App() {
                 <Cell
                   key={`row-${rowIndex}-col-${columnIndex}`}
                   cell={cell}
-                  onPress={() => onPress(rowIndex,columnIndex)}
+                  onPress={() => onPress(rowIndex, columnIndex)}
                 />
               ))}
             </View>
           ))}
+        </View>
+
+        <View style={styles.buttons}>
+          <Text
+            onPress={() => setGameMode("LOCAL")}
+            style={[
+              styles.button,
+              { backgroundColor: gameMode == "LOCAL" ? "#4F5686" : "#191F24" },
+            ]}
+          >
+            Local
+          </Text>
+          <Text
+            onPress={() => setGameMode("BOT_EASY")}
+            style={[
+              styles.button,
+              {
+                backgroundColor: gameMode == "BOT_EASY" ? "#4F5686" : "#191F24",
+              },
+            ]}
+          >
+            Easy Bot
+          </Text>
+          <Text
+            onPress={() => setGameMode("BOT_MEDIUM")}
+            style={[
+              styles.button,
+              {
+                backgroundColor:
+                  gameMode == "BOT_MEDIUM" ? "#4F5686" : "#191F24",
+              },
+            ]}
+          >
+            Medium Bot
+          </Text>
         </View>
       </ImageBackground>
 
@@ -226,5 +302,18 @@ const styles = StyleSheet.create({
   row: {
     flex: 1,
     flexDirection: "row",
+  },
+  buttons: {
+    position: "absolute",
+    bottom: 50,
+    flexDirection: "row",
+  },
+  button: {
+    color: "white",
+    margin: 10,
+    fontSize: 20,
+    backgroundColor: "#191F24",
+    padding: 10,
+    paddingHorizontal: 15,
   },
 });
